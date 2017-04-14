@@ -1,0 +1,38 @@
+# Modele Scorff
+model
+{
+#Definition des priors
+a ~ dbeta(1,1)
+Rmax ~ dunif(0,100)
+tau ~ dgamma(0.01,0.01)
+sigma<- pow(tau,-0.5)
+
+
+for (t in 1:year)
+{
+Fsw[t] ~ dbeta(1,1)
+FSW[t] ~ dbeta(1,1)
+
+# Formalisation de la vraisemblance sur les captures
+Ysw[t] ~ dbin (Fsw[t],sw[t])
+YSW[t] ~ dbin (FSW[t],SW[t])
+
+# Relation SR (= vraisemblance sur les données de PARR)
+EGG[t] <- (SW[t]*PROPFEMSW*NBEGGSW + sw[t]*PROPFEMsw*NBEGGsw)/SRR
+muPARR[t] <- log(EGG[t]/(1/a + EGG[t]/Rmax))
+PARR[t] ~ dlnorm(muPARR[t],tau)
+e.s[t] <- log(PARR[t])-muPARR[t]
+}
+
+#Calcul des predictions pour differentes valeurs de S
+#Permet la determination du pourcentage de risque que l'on est pret a supporter
+
+for (i in 1:100) 
+{
+PARRpred[i] ~ dlnorm(muPARRpred[i], tau)
+muPARRpred[i] <- log((i*10)/((1/a)+((i*10)/Rmax)))
+}
+PARRpred[101] ~ dlnorm(muPARRpred[101], tau)
+muPARRpred[101] <- log(2000/((1/a)+((2000)/Rmax)))
+}
+
